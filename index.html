@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas atividades</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: rgba(67, 97, 238, 0.1);
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --warning-color: #f8961e;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-color: #6c757d;
+            --border-color: #dee2e6;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 2.2rem;
+        }
+
+        .app-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .todo-container {
+            padding: 25px;
+        }
+
+        .todo-header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--gray-color);
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .add-button {
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 10px;
+            width: 100%;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .add-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Estilo para as abas */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: var(--gray-color);
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .task-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .task-item:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .task-item.completed {
+            border-left: 4px solid var(--success-color);
+            background-color: #f8f9fa;
+        }
+
+        .todo-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .todo-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: var(--gray-color);
+        }
+
+        .todo-details span {
+            display: flex;
+        }
+
+        .todo-details .label {
+            font-weight: 500;
+            margin-right: 4px;
+            color: var(--gray-color);
+        }
+
+        .todo-task {
+            font-size: 16px;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+
+        .completed .todo-task {
+            text-decoration: line-through;
+            color: var(--gray-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .btn {
+            background-color: transparent;
+            border: none;
+            padding: 6px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .btn-complete {
+            color: var(--success-color);
+        }
+
+        .btn-complete:hover {
+            background-color: rgba(76, 201, 240, 0.1);
+            transform: scale(1.1);
+        }
+
+        .btn-delete {
+            color: var(--danger-color);
+        }
+
+        .btn-delete:hover {
+            background-color: rgba(247, 37, 133, 0.1);
+            transform: scale(1.1);
+        }
+
+        .btn-return {
+            color: var(--warning-color);
+        }
+
+        .btn-return:hover {
+            background-color: rgba(248, 150, 30, 0.1);
+            transform: scale(1.1);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray-color);
+            font-style: italic;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+
+        .completion-date {
+            color: var(--success-color);
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .badge-success {
+            background-color: rgba(76, 201, 240, 0.1);
+            color: var(--success-color);
+        }
+
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+
+        .slide-fade-enter-active {
+            transition: all 0.3s ease-out;
+        }
+        .slide-fade-leave-active {
+            transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+        }
+        .slide-fade-enter-from,
+        .slide-fade-leave-to {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        /* Estilos para o modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-color);
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--danger-color);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background-color: var(--gray-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        /* Estilos para o indicador de carregamento */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-light);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>
+            <i class="fas fa-tasks" style="margin-right: 10px;"></i>
+            Minhas atividades
+        </h1>
+        
+        <!-- Indicador de carregamento -->
+        <div class="loading-overlay" v-if="isLoading">
+            <div class="spinner"></div>
+        </div>
+        
+        <div class="app-container">
+            <div class="todo-container">
+                <!-- Cabeçalho com botão para abrir o modal -->
+                <div class="header-actions">
+                    <div class="header-title">Gerenciador de Tarefas</div>
+                    <button class="btn-primary" @click="openModal">
+                        <i class="fas fa-plus" style="margin-right: 8px;"></i>
+                        Incluir atividade
+                    </button>
+                </div>
+                
+                <!-- Sistema de abas -->
+                <div class="tabs">
+                    <button class="tab" :class="{ active: activeTab === 'pending' }" @click="activeTab = 'pending'">
+                        Tarefas Pendentes
+                        <span class="badge badge-primary" v-if="pendingTasks.length > 0">{{ pendingTasks.length }}</span>
+                    </button>
+                    <button class="tab" :class="{ active: activeTab === 'completed' }" @click="activeTab = 'completed'">
+                        Tarefas Concluídas
+                        <span class="badge badge-success" v-if="completedTasks.length > 0">{{ completedTasks.length }}</span>
+                    </button>
+                </div>
+                
+                <!-- Conteúdo da aba de tarefas pendentes -->
+                <div id="pending-tasks" class="tab-content" :class="{ active: activeTab === 'pending' }">
+                    <transition-group name="slide-fade" tag="ul" id="todo-list">
+                        <li v-for="(task, index) in sortedPendingTasks" :key="'pending-' + index" class="task-item">
+                            <div class="todo-item">
+                                <div class="todo-task">{{ task.tarefa }}</div>
+                                <div class="todo-details">
+                                    <span>
+                                        <span class="label">Setor:</span>
+                                        {{ task.setor }}
+                                    </span>
+                                    <span v-if="task.cliente">
+                                        <span class="label">Cliente:</span>
+                                        {{ task.cliente }}
+                                    </span>
+                                    <span>
+                                        <span class="label">Previsão:</span>
+                                        {{ formatDate(task.dataPrevisao) }}
+                                    </span>
+                                    <span>
+                                        <span class="label">Criado:</span>
+                                        {{ task.dataCriacao }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-complete" title="Concluir tarefa" @click="completeTask(getOriginalIndex(task))">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-delete" title="Excluir tarefa" @click="deletePendingTask(getOriginalIndex(task))">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    </transition-group>
+                    <div class="empty-message" v-if="pendingTasks.length === 0">
+                        <i class="fas fa-clipboard-list" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <p>Não há tarefas pendentes.</p>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo da aba de tarefas concluídas -->
+                <div id="completed-tasks" class="tab-content" :class="{ active: activeTab === 'completed' }">
+                    <transition-group name="slide-fade" tag="ul" id="completed-list">
+                        <li v-for="(task, index) in completedTasks" :key="'completed-' + index" class="task-item completed">
+                            <div class="todo-item">
+                                <div class="todo-task">{{ task.tarefa }}</div>
+                                <div class="todo-details">
+                                    <span>
+                                        <span class="label">Setor:</span>
+                                        {{ task.setor }}
+                                    </span>
+                                    <span v-if="task.cliente">
+                                        <span class="label">Cliente:</span>
+                                        {{ task.cliente }}
+                                    </span>
+                                    <span>
+                                        <span class="label">Previsão:</span>
+                                        {{ formatDate(task.dataPrevisao) }}
+                                    </span>
+                                    <span>
+                                        <span class="label">Concluído:</span>
+                                        <span class="completion-date">{{ task.dataConclusao }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-return" title="Retornar para pendentes" @click="returnToPending(index)">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button class="btn btn-delete" title="Excluir tarefa" @click="deleteCompletedTask(index)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    </transition-group>
+                    <div class="empty-message" v-if="completedTasks.length === 0">
+                        <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <p>Não há tarefas concluídas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar tarefa -->
+        <transition name="fade">
+            <div class="modal-overlay" v-if="showModal" @click.self="showModal = false">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Adicionar Nova Atividade</h3>
+                        <button class="modal-close" @click="showModal = false">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="setor-input">Setor</label>
+                                <select id="setor-input" v-model="newTask.setor">
+                                    <option value="">Selecione um setor</option>
+                                    <option value="Gerente de Conta">Gerente de Conta</option>
+                                    <option value="Gerente de Produto">Gerente de Produto</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="data-previsao-input">Data Previsão</label>
+                                <input type="date" id="data-previsao-input" v-model="newTask.dataPrevisao">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cliente-input">Cliente</label>
+                                <input type="text" id="cliente-input" placeholder="Nome do cliente" v-model="newTask.cliente">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tarefa-input">Atividade</label>
+                                <input type="text" id="tarefa-input" placeholder="Descrição da atividade" v-model="newTask.tarefa" @keyup.enter="addTodoAndCloseModal" style="height: 80px; padding-top: 8px; padding-bottom: 8px; vertical-align: top;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" @click="showModal = false">Cancelar</button>
+                        <button class="btn-primary" @click="addTodoAndCloseModal">
+                            <i class="fas fa-plus" style="margin-right: 8px;"></i>
+                            Adicionar Tarefa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+        
+        // Inicializar o cliente Supabase
+        const supabaseUrl = 'https://xncafeyrjwafnxncvzln.supabase.co'; // ex: https://abcdefghijklm.supabase.co
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuY2FmZXlyandhZm54bmN2emxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MTEzMDgsImV4cCI6MjA1NzQ4NzMwOH0.ROczx7QwIUgEyLluD0SIf2Y0iDVapgREx9cA93JtUS8'; // Chave anon/public
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        createApp({
+            setup() {
+                // Estado da aplicação
+                const activeTab = ref('pending');
+                const pendingTasks = ref([]);
+                const completedTasks = ref([]);
+                const showModal = ref(false);
+                const isLoading = ref(false);
+                const newTask = ref({
+                    setor: '',
+                    cliente: '',
+                    tarefa: '',
+                    dataPrevisao: new Date().toISOString().substr(0, 10),
+                    dataCriacao: ''
+                });
+                
+                // Computed properties
+                const sortedPendingTasks = computed(() => {
+                    // Criar uma cópia do array para não modificar o original
+                    return [...pendingTasks.value].sort((a, b) => {
+                        // Converter strings de data para objetos Date para comparação
+                        const dateA = new Date(a.dataPrevisao);
+                        const dateB = new Date(b.dataPrevisao);
+                        return dateA - dateB; // Ordem crescente
+                    });
+                });
+                
+                // Função para obter o índice original de uma tarefa na lista não ordenada
+                function getOriginalIndex(task) {
+                    return pendingTasks.value.findIndex(t => t.id === task.id);
+                }
+                
+                // Métodos
+                function formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    const dataParts = dateString.split('-');
+                    return `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+                }
+                
+                function getCurrentDateTime() {
+                    const now = new Date();
+                    const options = { 
+                        year: 'numeric', 
+                        month: 'numeric', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    };
+                    return now.toLocaleDateString('pt-BR', options);
+                }
+                
+                function getCurrentDate() {
+                    // Criar uma nova data
+                    const now = new Date();
+                    
+                    // Obter ano, mês e dia
+                    // Mês é baseado em zero (0-11), então adicionamos 1
+                    // Também garantimos que mês e dia tenham dois dígitos
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    // Formatar como YYYY-MM-DD para o campo de data HTML
+                    return `${year}-${month}-${day}`;
+                }
+                
+                function openModal() {
+                    // Atualizar a data de previsão para a data atual
+                    newTask.value.dataPrevisao = getCurrentDate();
+                    // Limpar outros campos
+                    newTask.value.tarefa = '';
+                    newTask.value.cliente = '';
+                    newTask.value.setor = '';
+                    // Abrir o modal
+                    showModal.value = true;
+                    console.log('Modal aberto com data atual:', newTask.value.dataPrevisao);
+                }
+                
+                // Funções para Supabase
+                async function loadTasksFromSupabase() {
+                    isLoading.value = true;
+                    try {
+                        console.log('Carregando atividades do Supabase...');
+                        
+                        // Carregar tarefas pendentes
+                        const { data: pendingData, error: pendingError } = await supabase
+                            .from('atividades')
+                            .select('*')
+                            .eq('status', 'Pendente')
+                            .order('data_previsao', { ascending: true });
+                            
+                        if (pendingError) throw pendingError;
+                        
+                        // Carregar tarefas concluídas
+                        const { data: completedData, error: completedError } = await supabase
+                            .from('atividades')
+                            .select('*')
+                            .eq('status', 'Concluída')
+                            .order('data_conclusao', { ascending: false });
+                            
+                        if (completedError) throw completedError;
+                        
+                        // Mapear os dados para o formato usado pela aplicação
+                        pendingTasks.value = pendingData.map(item => ({
+                            id: item.id,
+                            setor: item.setor,
+                            cliente: item.cliente,
+                            tarefa: item.tarefa,
+                            dataPrevisao: item.data_previsao,
+                            dataCriacao: formatDateTimeFromDB(item.data_criacao),
+                            status: item.status
+                        }));
+                        
+                        completedTasks.value = completedData.map(item => ({
+                            id: item.id,
+                            setor: item.setor,
+                            cliente: item.cliente,
+                            tarefa: item.tarefa,
+                            dataPrevisao: item.data_previsao,
+                            dataCriacao: formatDateTimeFromDB(item.data_criacao),
+                            dataConclusao: formatDateTimeFromDB(item.data_conclusao),
+                            status: item.status
+                        }));
+                        
+                        console.log('Tarefas carregadas com sucesso:', pendingTasks.value.length, 'pendentes,', completedTasks.value.length, 'concluídas');
+                    } catch (error) {
+                        console.error('Erro ao carregar tarefas do Supabase:', error);
+                        // Fallback para localStorage se o Supabase falhar
+                        loadFromLocalStorage();
+                    } finally {
+                        isLoading.value = false;
+                    }
+                }
+                
+                // Função para formatar data/hora do formato do banco para exibição
+                function formatDateTimeFromDB(dateTimeString) {
+                    if (!dateTimeString) return '';
+                    const date = new Date(dateTimeString);
+                    return date.toLocaleDateString('pt-BR', { 
+                        year: 'numeric', 
+                        month: 'numeric', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+                
+                // Funções para localStorage (fallback)
+                function saveToLocalStorage() {
+                    try {
+                        localStorage.setItem('pendingTasks', JSON.stringify(pendingTasks.value));
+                        localStorage.setItem('completedTasks', JSON.stringify(completedTasks.value));
+                        console.log('Dados salvos no localStorage com sucesso (fallback)');
+                    } catch (error) {
+                        console.error('Erro ao salvar no localStorage:', error);
+                    }
+                }
+                
+                function loadFromLocalStorage() {
+                    try {
+                        const savedPending = localStorage.getItem('pendingTasks');
+                        const savedCompleted = localStorage.getItem('completedTasks');
+                        
+                        if (savedPending) {
+                            pendingTasks.value = JSON.parse(savedPending);
+                            console.log('Tarefas pendentes carregadas do localStorage:', pendingTasks.value.length);
+                        }
+                        
+                        if (savedCompleted) {
+                            completedTasks.value = JSON.parse(savedCompleted);
+                            console.log('Tarefas concluídas carregadas do localStorage:', completedTasks.value.length);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar do localStorage:', error);
+                    }
+                }
+                
+                async function addTodo() {
+                    console.log('Iniciando adição de tarefa...');
+                    
+                    // Verificar se os campos obrigatórios não estão vazios
+                    if (newTask.value.tarefa.trim() === '') {
+                        alert('Por favor, preencha a descrição da atividade.');
+                        return false;
+                    }
+
+                    if (newTask.value.setor === '') {
+                        alert('Por favor, selecione um setor.');
+                        return false;
+                    }
+                    
+                    console.log('Validação de campos ok');
+                    
+                    try {
+                        // Criar objeto para inserção no Supabase
+                        const taskData = {
+                            tarefa: newTask.value.tarefa,
+                            setor: newTask.value.setor,
+                            cliente: newTask.value.cliente,
+                            data_previsao: newTask.value.dataPrevisao,
+                            status: 'Pendente'
+                        };
+                        
+                        console.log('Enviando tarefa para o Supabase:', taskData);
+                        
+                        // Inserir no Supabase
+                        const { data, error } = await supabase
+                            .from('atividades')
+                            .insert(taskData)
+                            .select()
+                            .single();
+                            
+                        if (error) throw error;
+                        
+                        console.log('Tarefa adicionada com sucesso no Supabase:', data);
+                        
+                        // Adicionar à lista local
+                        const newTaskFormatted = {
+                            id: data.id,
+                            setor: data.setor,
+                            cliente: data.cliente,
+                            tarefa: data.tarefa,
+                            dataPrevisao: data.data_previsao,
+                            dataCriacao: formatDateTimeFromDB(data.data_criacao),
+                            status: data.status
+                        };
+                        
+                        pendingTasks.value.push(newTaskFormatted);
+                        
+                        // Salvar no localStorage como fallback
+                        saveToLocalStorage();
+                        
+                        // Limpar o formulário
+                        newTask.value.tarefa = '';
+                        newTask.value.cliente = '';
+                        newTask.value.setor = '';
+                        newTask.value.dataPrevisao = getCurrentDate();
+                        
+                        // Mudar para a aba de pendentes
+                        activeTab.value = 'pending';
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('Erro ao adicionar tarefa no Supabase:', error);
+                        alert('Erro ao salvar a tarefa. Tente novamente.');
+                        return false;
+                    }
+                }
+                
+                function addTodoAndCloseModal() {
+                    console.log('Adicionando tarefa e fechando modal...');
+                    addTodo().then(success => {
+                        if (success) {
+                            showModal.value = false;
+                            console.log('Modal fechado após adicionar tarefa');
+                        }
+                    });
+                }
+                
+                async function completeTask(index) {
+                    console.log('Marcando tarefa como concluída, índice:', index);
+                    const task = pendingTasks.value[index];
+                    
+                    try {
+                        const now = new Date().toISOString();
+                        
+                        // Atualizar no Supabase
+                        const { error } = await supabase
+                            .from('atividades')
+                            .update({ 
+                                status: 'Concluída',
+                                data_conclusao: now
+                            })
+                            .eq('id', task.id);
+                            
+                        if (error) throw error;
+                        
+                        console.log('Tarefa atualizada no Supabase');
+                        
+                        // Atualizar localmente
+                        const completedTask = { ...task };
+                        completedTask.dataConclusao = getCurrentDateTime();
+                        completedTask.status = 'Concluída';
+                        
+                        // Mover para a lista de concluídas
+                        completedTasks.value.push(completedTask);
+                        
+                        // Remover da lista de pendentes
+                        pendingTasks.value.splice(index, 1);
+                        
+                        // Salvar no localStorage como fallback
+                        saveToLocalStorage();
+                    } catch (error) {
+                        console.error('Erro ao concluir tarefa:', error);
+                        alert('Erro ao concluir a tarefa. Tente novamente.');
+                    }
+                }
+                
+                async function returnToPending(index) {
+                    console.log('Retornando tarefa para pendentes, índice:', index);
+                    const task = completedTasks.value[index];
+                    
+                    try {
+                        // Atualizar no Supabase
+                        const { error } = await supabase
+                            .from('atividades')
+                            .update({ 
+                                status: 'Pendente',
+                                data_conclusao: null
+                            })
+                            .eq('id', task.id);
+                            
+                        if (error) throw error;
+                        
+                        console.log('Tarefa retornada para pendentes no Supabase');
+                        
+                        // Atualizar localmente
+                        const pendingTask = { ...task };
+                        delete pendingTask.dataConclusao;
+                        pendingTask.status = 'Pendente';
+                        
+                        // Mover para a lista de pendentes
+                        pendingTasks.value.push(pendingTask);
+                        
+                        // Remover da lista de concluídas
+                        completedTasks.value.splice(index, 1);
+                        
+                        // Salvar no localStorage como fallback
+                        saveToLocalStorage();
+                        
+                        // Mudar para a aba de pendentes
+                        activeTab.value = 'pending';
+                    } catch (error) {
+                        console.error('Erro ao retornar tarefa para pendentes:', error);
+                        alert('Erro ao retornar a tarefa para pendentes. Tente novamente.');
+                    }
+                }
+                
+                async function deletePendingTask(index) {
+                    console.log('Excluindo tarefa pendente, índice:', index);
+                    const task = pendingTasks.value[index];
+                    
+                    try {
+                        // Excluir do Supabase
+                        const { error } = await supabase
+                            .from('atividades')
+                            .delete()
+                            .eq('id', task.id);
+                            
+                        if (error) throw error;
+                        
+                        console.log('Tarefa excluída do Supabase');
+                        
+                        // Remover da lista local
+                        pendingTasks.value.splice(index, 1);
+                        
+                        // Salvar no localStorage como fallback
+                        saveToLocalStorage();
+                    } catch (error) {
+                        console.error('Erro ao excluir tarefa pendente:', error);
+                        alert('Erro ao excluir a tarefa. Tente novamente.');
+                    }
+                }
+                
+                async function deleteCompletedTask(index) {
+                    console.log('Excluindo tarefa concluída, índice:', index);
+                    const task = completedTasks.value[index];
+                    
+                    try {
+                        // Excluir do Supabase
+                        const { error } = await supabase
+                            .from('atividades')
+                            .delete()
+                            .eq('id', task.id);
+                            
+                        if (error) throw error;
+                        
+                        console.log('Tarefa concluída excluída do Supabase');
+                        
+                        // Remover da lista local
+                        completedTasks.value.splice(index, 1);
+                        
+                        // Salvar no localStorage como fallback
+                        saveToLocalStorage();
+                    } catch (error) {
+                        console.error('Erro ao excluir tarefa concluída:', error);
+                        alert('Erro ao excluir a tarefa. Tente novamente.');
+                    }
+                }
+                
+                // Carregar tarefas quando o aplicativo iniciar
+                onMounted(() => {
+                    console.log('Aplicativo iniciado, carregando tarefas...');
+                    loadTasksFromSupabase();
+                });
+                
+                return {
+                    activeTab,
+                    pendingTasks,
+                    completedTasks,
+                    sortedPendingTasks,
+                    newTask,
+                    showModal,
+                    isLoading,
+                    formatDate,
+                    getCurrentDateTime,
+                    openModal,
+                    addTodo,
+                    addTodoAndCloseModal,
+                    completeTask,
+                    returnToPending,
+                    deletePendingTask,
+                    deleteCompletedTask,
+                    getOriginalIndex
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html> 
